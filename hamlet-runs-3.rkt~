@@ -10,7 +10,7 @@
 ;; ve hızlı üyelik kontrolü için bir hash'e koy.
 (define hamlet-words
   (let ([h (make-hash)])
-    (for ([w (file->lines "hamlet_words.txt")])
+    (for ([w (file->lines "hamlet-words.txt")])
       (hash-set! h w #t))
     h))
 
