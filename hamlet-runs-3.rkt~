@@ -1,0 +1,141 @@
+#lang racket
+
+(define chars "abcdefghijklmnopqrstuvwxyz ")
+(define k 1000000000)
+;; Okunuşu: Bir trilyon
+;; Basamak Sayısı: 13 basamaklıdır (12 sıfırı vardır).
+;; Üstel Gösterimi: 10¹² veya 1 × 10¹² şeklinde gösterilir.
+
+;; Hamlet'in kelime listesini oku (hamlet_words.txt, aynı klasörde olmalı)
+;; ve hızlı üyelik kontrolü için bir hash'e koy.
+(define hamlet-words
+  (let ([h (make-hash)])
+    (for ([w (file->lines "hamlet_words.txt")])
+      (hash-set! h w #t))
+    h))
+
+;; Eşleşen kelimeleri ve kaç kere geçtiklerini tutan tablo.
+;; ÖNEMLİ: bu tablonun boyutu k ile DEĞİL, sözlükteki benzersiz kelime
+;; sayısıyla sınırlı (686) — yani k ne kadar büyürse büyüsün bellek
+;; patlamaz, sadece sayaçlar büyür.
+(define match-table (make-hash))
+(define total-words 0)
+(define cur-chars '())
+
+;; Art arda gelen Hamlet-kelimesi dizileri (run'lar).
+;; Bellek güvenli: sadece GERÇEKTEN run oluştuğunda (nadir) bir şey
+;; ekleniyor, k ile orantılı büyümüyor.
+(define cur-run-words '())   ; şu an devam eden run'daki kelimeler (ters sırada)
+(define found-runs '())      ; tamamlanmış run'lar: (uzunluk . kelime-listesi)
+
+(define (flush-run!)
+  (when (>= (length cur-run-words) 2)
+    (set! found-runs
+          (cons (cons (length cur-run-words) (reverse cur-run-words))
+                found-runs)))
+  (set! cur-run-words '()))
+
+(time
+ (for ([i (in-range k)])
+   (define ch (string-ref chars (random (string-length chars))))
+   (cond
+     [(char=? ch #\space)
+      (unless (null? cur-chars)
+        (define word (list->string (reverse cur-chars)))
+        (set! total-words (add1 total-words))
+        (define is-match (hash-has-key? hamlet-words word))
+        (when is-match
+          (hash-update! match-table word add1 0))
+        (if is-match
+            (set! cur-run-words (cons word cur-run-words))
+            (flush-run!)))
+      (set! cur-chars '())]
+     [else (set! cur-chars (cons ch cur-chars))]))
+ (flush-run!))  ; metin biterken yarım kalmış bir run varsa onu da kaydet
+
+(displayln (format "k (harf sayısı): ~a" k))
+(displayln (format "Toplam kelime sayısı: ~a" total-words))
+(displayln (format "Hamlet sözlüğündeki benzersiz kelime sayısı: ~a" (hash-count hamlet-words)))
+(displayln (format "Eşleşen BENZERSİZ kelime sayısı: ~a" (hash-count match-table)))
+(displayln (format "Toplam eşleşme sayısı (tekrarlarla): ~a"
+                    (apply + (hash-values match-table))))
+
+(displayln "En sık eşleşen 15 kelime:")
+(define sorted-matches
+  (sort (hash->list match-table) > #:key cdr))
+(for ([pair (take sorted-matches (min 15 (length sorted-matches)))])
+  (displayln (format "  ~a : ~a" (car pair) (cdr pair))))
+
+;; Eşleşmeleri kelime UZUNLUĞUNA göre grupla — her uzunluktan kaç
+;; benzersiz kelime eşleşmiş ve toplam kaç kez geçmiş, görelim.
+(displayln "")
+(displayln "Uzunluğa göre eşleşme özeti:")
+(define by-length (make-hash))  ; uzunluk -> (benzersiz-sayisi . toplam-tekrar)
+(for ([pair (hash->list match-table)])
+  (define len (string-length (car pair)))
+  (define cnt (cdr pair))
+  (define cur (hash-ref by-length len (cons 0 0)))
+  (hash-set! by-length len (cons (add1 (car cur)) (+ (cdr cur) cnt))))
+(for ([len (sort (hash-keys by-length) <)])
+  (define entry (hash-ref by-length len))
+  (displayln (format "  ~a harfli: ~a benzersiz kelime, toplam ~a kez"
+                      len (car entry) (cdr entry))))
+
+;; Her uzunluktan birkaç örnek kelime göster (varsa)
+(displayln "")
+(displayln "Uzunluğa göre örnek kelimeler (en fazla 5'er tane):")
+(define by-length-words (make-hash))
+(for ([pair (hash->list match-table)])
+  (define len (string-length (car pair)))
+  (hash-update! by-length-words len (lambda (lst) (cons (car pair) lst)) '()))
+(for ([len (sort (hash-keys by-length-words) <)])
+  (define ws (hash-ref by-length-words len))
+  (displayln (format "  ~a harfli örnekler: ~a"
+                      len (take ws (min 5 (length ws))))))
+
+;; Yalnızca üç kelimelik run'ları listele
+(displayln "")
+(displayln "Üç kelimelik run'lar (tekrarlar dahil):")
+
+(define three-word-runs
+  (filter (lambda (r) (= (car r) 3))
+          found-runs))
+
+(for ([r three-word-runs])
+  (displayln (string-join (cdr r) " ")))
+
+(displayln
+ (format "Toplam üç kelimelik run sayısı: ~a"
+         (length three-word-runs)))
+
+;; Benzersiz üçlüleri bul
+(define unique-three-word-runs
+  (remove-duplicates
+   (map cdr three-word-runs)
+   equal?))
+
+(displayln "")
+(displayln "Benzersiz üç kelimelik run'lar:")
+
+(for ([r (sort unique-three-word-runs
+                string<?
+                #:key (lambda (words)
+                        (string-join words " ")))])
+  (displayln (string-join r " ")))
+
+(displayln
+ (format "Benzersiz üçlü sayısı: ~a"
+         (length unique-three-word-runs)))
+
+;; Benzersiz üçlüleri dosyaya yaz
+(call-with-output-file
+ "hamlet-3word-runs.txt"
+ (lambda (out)
+   (for ([r (sort unique-three-word-runs
+                  string<?
+                  #:key (lambda (words)
+                          (string-join words " ")))])
+     (displayln (string-join r " ") out)))
+ #:exists 'replace)
+
+(displayln "Benzersiz üçlüler hamlet-3word-runs.txt dosyasına yazıldı.")
