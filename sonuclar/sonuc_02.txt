@@ -1,0 +1,40 @@
+Toplam kelime sayısı: 3566622
+Hamlet sözlüğündeki benzersiz kelime sayısı: 4606
+Eşleşen benzersiz kelime sayısı: 404
+Toplam eşleşme sayısı (tekrarlarla): 19464
+
+En sık eşleşen 15 kelime:
+  i : 5196
+  a : 5122
+  or : 208
+  re : 207
+  an : 206
+  ay : 202
+  us : 200
+  ta : 198
+  we : 197
+  ha : 195
+  am : 194
+  ho : 193
+  go : 192
+  me : 192
+  no : 192
+
+Uzunluğa göre eşleşme özeti:
+  1 harfli: 2 benzersiz kelime, toplam 10318 kez
+  2 harfli: 40 benzersiz kelime, toplam 7460 kez
+  3 harfli: 209 benzersiz kelime, toplam 1519 kez
+  4 harfli: 144 benzersiz kelime, toplam 158 kez
+  5 harfli: 9 benzersiz kelime, toplam 9 kez
+
+Run uzunluklarına göre sonuçlar:
+  2 kelimelik run: 115
+
+Dört veya daha uzun kelimelik run'lar:
+Dört veya daha uzun run bulunamadı.
+Toplam dört veya daha uzun run sayısı: 0
+
+En uzun run:
+Uzunluk: 2 kelime
+a a
+> 
