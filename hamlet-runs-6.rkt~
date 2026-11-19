@@ -1,0 +1,229 @@
+
+#lang racket
+
+;; HAMLET-RUNS-6
+;; Bu sürüm, rastgele üretilen metinde Hamlet sözlüğüne
+;; ait kelimelerin art arda kaç kez geldiğini araştırır.
+;;
+;; İki veya daha uzun bütün run'ları sayar.
+;; Dört veya daha uzun run'ları ayrıca listeler.
+;; Önceki sürümlerdeki üçlü run özel işlemi kaldırılmıştır.
+
+(define chars "abcdefghijklmnopqrstuvwxyz ")
+
+(define k 100000)
+
+;; Hamlet'in kelime listesini oku.
+;; hamlet-words.txt aynı klasörde olmalı.
+
+(define hamlet-words
+  (let ([h (make-hash)])
+    (for ([w (file->lines "hamlet-words.txt")])
+      (hash-set! h w #t))
+    h))
+
+;; Eşleşen kelimeleri ve tekrar sayılarını tut.
+
+(define match-table (make-hash))
+
+(define total-words 0)
+
+(define cur-chars '())
+
+;; Şu anda devam eden run, ters sırada tutulur.
+
+(define cur-run-words '())
+
+;; Run uzunluklarına göre sayılar.
+
+(define run-counts (make-hash))
+
+;; Dört veya daha uzun run'ları sakla.
+
+(define long-runs '())
+
+;; Şimdiye kadar bulunan en uzun run.
+
+(define longest-run '())
+
+;; Tamamlanan run'ı işle.
+
+(define (flush-run!)
+  (define len (length cur-run-words))
+
+  (when (>= len 2)
+    (define words (reverse cur-run-words))
+
+    ;; Bu uzunluktaki run sayısını bir artır.
+
+    (hash-update! run-counts len add1 0)
+
+    ;; Dört veya daha uzun run'ları kaydet.
+
+    (when (>= len 4)
+      (set! long-runs
+            (cons words long-runs)))
+
+    ;; En uzun run'ı güncelle.
+
+    (when (> len (length longest-run))
+      (set! longest-run words)))
+
+  (set! cur-run-words '()))
+
+;; Tamamlanan tek bir kelimeyi işle.
+
+(define (process-word! word)
+
+  (set! total-words (add1 total-words))
+
+  (define is-match
+    (hash-has-key? hamlet-words word))
+
+  (when is-match
+    (hash-update! match-table word add1 0))
+
+  (if is-match
+      (set! cur-run-words
+            (cons word cur-run-words))
+      (flush-run!)))
+
+;; Rastgele metni üret ve kelimeleri işle.
+
+(time
+ (for ([i (in-range k)])
+
+   (define ch
+     (string-ref chars
+                 (random (string-length chars))))
+
+   (if (char=? ch #\space)
+
+       (unless (null? cur-chars)
+         (process-word!
+          (list->string (reverse cur-chars)))
+         (set! cur-chars '()))
+
+       (set! cur-chars (cons ch cur-chars))))
+
+ ;; Metnin sonunda boşluk yoksa son kelimeyi de işle.
+
+ (unless (null? cur-chars)
+   (process-word!
+    (list->string (reverse cur-chars))))
+
+ ;; Son run'ı tamamla.
+
+ (flush-run!))
+
+;; GENEL SONUÇLAR
+
+(displayln "")
+
+(displayln (format "k (karakter sayısı): ~a" k))
+
+(displayln (format "Toplam kelime sayısı: ~a" total-words))
+
+(displayln
+ (format "Hamlet sözlüğündeki benzersiz kelime sayısı: ~a"
+         (hash-count hamlet-words)))
+
+(displayln
+ (format "Eşleşen benzersiz kelime sayısı: ~a"
+         (hash-count match-table)))
+
+(displayln
+ (format "Toplam eşleşme sayısı (tekrarlarla): ~a"
+         (apply + (hash-values match-table))))
+
+;; EN SIK EŞLEŞEN 15 KELİME
+
+(displayln "")
+
+(displayln "En sık eşleşen 15 kelime:")
+
+(define sorted-matches
+  (sort (hash->list match-table) > #:key cdr))
+
+(for ([pair (take sorted-matches
+                  (min 15 (length sorted-matches)))])
+  (displayln
+   (format "  ~a : ~a" (car pair) (cdr pair))))
+
+;; EŞLEŞEN KELİMELERİ UZUNLUKLARINA GÖRE GRUPLA
+
+(displayln "")
+
+(displayln "Uzunluğa göre eşleşme özeti:")
+
+(define by-length (make-hash))
+
+(for ([pair (hash->list match-table)])
+
+  (define len (string-length (car pair)))
+  (define cnt (cdr pair))
+
+  (define cur
+    (hash-ref by-length len (cons 0 0)))
+
+  (hash-set! by-length len
+             (cons (add1 (car cur))
+                   (+ (cdr cur) cnt))))
+
+(for ([len (sort (hash-keys by-length) <)])
+
+  (define entry (hash-ref by-length len))
+
+  (displayln
+   (format "  ~a harfli: ~a benzersiz kelime, toplam ~a kez"
+           len (car entry) (cdr entry))))
+
+;; RUN UZUNLUKLARININ ÖZETİ
+
+(displayln "")
+
+(displayln "Run uzunluklarına göre sonuçlar:")
+
+(for ([len (sort (hash-keys run-counts) <)])
+
+  (displayln
+   (format "  ~a kelimelik run: ~a"
+           len (hash-ref run-counts len))))
+
+;; DÖRT VEYA DAHA UZUN RUN'LAR
+
+(displayln "")
+
+(displayln "Dört veya daha uzun kelimelik run'lar:")
+
+(if (null? long-runs)
+
+    (displayln "Dört veya daha uzun run bulunamadı.")
+
+    (for ([r (reverse long-runs)])
+      (displayln
+       (format "~a kelime: ~a"
+               (length r)
+               (string-join r " ")))))
+
+(displayln
+ (format "Toplam dört veya daha uzun run sayısı: ~a"
+         (length long-runs)))
+
+;; EN UZUN RUN
+
+(displayln "")
+
+(displayln "En uzun run:")
+
+(if (null? longest-run)
+
+    (displayln "İki veya daha uzun kelimelik run bulunamadı.")
+
+    (begin
+      (displayln
+       (format "Uzunluk: ~a kelime"
+               (length longest-run)))
+
+      (displayln
+       (string-join longest-run " "))))
