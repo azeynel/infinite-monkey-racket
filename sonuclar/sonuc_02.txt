@@ -1,3 +1,8 @@
+Welcome to DrRacket, version 9.3 [cs].
+Language: racket; memory limit: 128 MB.
+cpu time: 67750 real time: 69717 gc time: 4625
+
+k (karakter sayısı): 100000000
 Toplam kelime sayısı: 3566622
 Hamlet sözlüğündeki benzersiz kelime sayısı: 4606
 Eşleşen benzersiz kelime sayısı: 404
