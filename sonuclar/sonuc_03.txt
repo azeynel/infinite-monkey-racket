@@ -1,0 +1,47 @@
+Welcome to DrRacket, version 9.3 [cs].
+Language: racket; memory limit: 128 MB.
+cpu time: 656078 real time: 658503 gc time: 36093
+
+k (karakter sayısı): 1000000000
+Toplam kelime sayısı: 35661136
+Hamlet sözlüğündeki benzersiz kelime sayısı: 4606
+Eşleşen benzersiz kelime sayısı: 932
+Toplam eşleşme sayısı (tekrarlarla): 192583
+
+En sık eşleşen 15 kelime:
+  a : 50959
+  i : 50796
+  us : 1951
+  lo : 1939
+  as : 1932
+  no : 1927
+  so : 1922
+  am : 1919
+  at : 1904
+  se : 1898
+  he : 1897
+  et : 1896
+  wi : 1896
+  ho : 1892
+  it : 1891
+
+Uzunluğa göre eşleşme özeti:
+  1 harfli: 2 benzersiz kelime, toplam 101755 kez
+  2 harfli: 40 benzersiz kelime, toplam 74587 kez
+  3 harfli: 209 benzersiz kelime, toplam 14475 kez
+  4 harfli: 612 benzersiz kelime, toplam 1693 kez
+  5 harfli: 66 benzersiz kelime, toplam 70 kez
+  6 harfli: 3 benzersiz kelime, toplam 3 kez
+
+Run uzunluklarına göre sonuçlar:
+  2 kelimelik run: 1000
+  3 kelimelik run: 6
+
+Dört veya daha uzun kelimelik run'lar:
+Dört veya daha uzun run bulunamadı.
+Toplam dört veya daha uzun run sayısı: 0
+
+En uzun run:
+Uzunluk: 3 kelime
+as en i
+> 
